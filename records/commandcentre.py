@@ -10,7 +10,8 @@ import json
 import urllib
 from decimal import Decimal, ROUND_DOWN
 
-from yellowant.messageformat import MessageClass, MessageAttachmentsClass, AttachmentFieldsClass
+import datetime
+from yellowant.messageformat import MessageClass, MessageAttachmentsClass, AttachmentFieldsClass, MessageButtonsClass
 
 from .models import YellowUserToken,DropBoxUserToken
 #import traceback
@@ -44,12 +45,13 @@ class CommandCentre(object):
             'get_all_shared_folders' : self.get_all_shared_folders,
             'get_all_file_requests': self.get_all_file_requests,
             'get_space_usage' : self.get_space_usage,
-            # 'list_all_invoice_ids': self.list_all_invoice_ids,
-            # 'update_invoice' : self.update_invoice,
-            # 'get_all_customers':    self.get_all_customers,
-            # 'get_customer_details' : self.get_customer_details,
-            # 'create_customer' : self.create_customer,
-            # 'list_all_customer_ids' : self.list_all_customer_ids
+            'get_shared_links': self.get_shared_links,
+            'get_all_folders' : self.get_all_folders,
+            'get_more_folders': self.get_more_folders,
+            'download_file' : self.download_file,
+            'search' : self.search,
+            'share_folder' : self.share_folder,
+            'create_folder' : self.create_folder,
         }
 
         self.user_integration = YellowUserToken.objects.get\
@@ -193,7 +195,6 @@ class CommandCentre(object):
                 message.attach(attachment)
                 return message.to_json()
             else:
-                pass
                 message.message_text = "All file requests :"
                 message.attach(attachment)
                 return message.to_json()
@@ -258,457 +259,419 @@ class CommandCentre(object):
             return m.to_json()
 
 
-    # def update_invoice(self,args):
-    #
-    #     print("In update_invoice")
-    #
-    #     # Arguments passed from slack
-    #     id = args['invoice_id']
-    #     due_date = args['due_date']
-    #     syn_token = args['syn_token']
-    #
-    #     ## First we make an API call to fetch the particular invoice
-    #
-    #     # API call parameters to fetch the invoice
-    #     route = "/v3/company/" + self.realmID + "/invoice/" + id
-    #     bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #     auth_header = 'Bearer ' + bearer.accessToken
-    #     headers = {'Authorization': auth_header, 'accept': 'application/json'}
-    #
-    #     # Consuming the API
-    #     r = requests.get(settings.PRODUCTION_BASE_URL + route, headers=headers)
-    #
-    #     # Response check
-    #     if r.status_code == requests.codes.ok:
-    #
-    #         # Getting response in JSON
-    #         response = json.loads(r.text)
-    #         #print(response)
-    #         data = response['Invoice']
-    #         print("Invoice part")
-    #         print(data)
-    #
-    #         # Updating the invoice
-    #         payload = data
-    #         payload["DueDate"] = due_date
-    #         payload["SyncToken"] = syn_token
-    #
-    #         ## Once invoice is successfully fetched, we update it
-    #
-    #         # API call parameters to update the invoice
-    #         route = "/v3/company/" + self.realmID + "/invoice"
-    #         bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #         auth_header = 'Bearer ' + bearer.accessToken
-    #         headers = {'Authorization': auth_header, 'accept': 'application/json'}
-    #
-    #         # Consuming the API
-    #         r = requests.post(settings.PRODUCTION_BASE_URL + route, headers=headers,json=payload)
-    #
-    #         # Response check
-    #         if r.status_code == requests.codes.ok:
-    #
-    #             # Getting response in JSON
-    #             response = json.loads(r.text)
-    #             print(response,r.status_code)
-    #
-    #             message = MessageClass()
-    #             message.message_text = "Invoice updated"
-    #             return message.to_json()
-    #         else:
-    #             return "{0}: {1}".format(r.status_code, r.text)
-    #     else:
-    #         m = MessageClass()
-    #         d = json.loads(r.text)
-    #         m.message_text = d["Fault"]["Error"][0]["Detail"]
-    #         return m.to_json() #"{0}: {1}".format(r.status_code, r.text)
-    #
-    # def get_all_customers(self,args):
-    #
-    #     print("In get_all_customers")
-    #
-    #     # API call parameters for getting all customers
-    #     route = "/v3/company/" + self.realmID + "/query?query=select * from Customer"
-    #     bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #     auth_header = 'Bearer ' + bearer.accessToken
-    #     headers = {'Authorization': auth_header, 'content-type': 'application/json'}
-    #
-    #     # Consuming the API
-    #     r = requests.get(settings.PRODUCTION_BASE_URL + route, headers=headers)
-    #
-    #     # Error check
-    #     if r.status_code == requests.codes.ok:
-    #
-    #         # Getting response in JSON format
-    #         response = json.loads(json.dumps(xmltodict.parse(r.text)))
-    #
-    #         #print(response)
-    #
-    #         # Making message from YA SDK
-    #         message = MessageClass()
-    #         message.message_text = " All Customer details :"
-    #
-    #         customer_data = response['IntuitResponse']['QueryResponse']['Customer']
-    #         print("-------------------")
-    #         print(customer_data)
-    #         print(len(customer_data))
-    #         print(customer_data[0]['DisplayName'])
-    #         print(customer_data[0]['PrimaryEmailAddr']['Address'])
-    #         print(customer_data[0]['Balance'])
-    #
-    #         for i in range(0,len(customer_data)):
-    #
-    #             attachment = MessageAttachmentsClass()
-    #             try:
-    #                 field1 = AttachmentFieldsClass()
-    #                 field1.title = "Customer ID :"
-    #                 field1.value = customer_data[i]['Id']
-    #                 attachment.attach_field(field1)
-    #             except:
-    #                 pass
-    #
-    #             try:
-    #                 field2 = AttachmentFieldsClass()
-    #                 field2.title = "Name :"
-    #                 field2.value = customer_data[i]['DisplayName']
-    #                 attachment.attach_field(field2)
-    #             except:
-    #                 pass
-    #
-    #             try :
-    #                 field3 = AttachmentFieldsClass()
-    #                 field3.title = "Email Id :"
-    #                 field3.value = customer_data[i]['PrimaryEmailAddr']['Address']
-    #                 attachment.attach_field(field3)
-    #             except:
-    #                 pass
-    #
-    #             try:
-    #                 field4 = AttachmentFieldsClass()
-    #                 field4.title = "Balance:"
-    #                 field4.value = customer_data[i]['Balance']
-    #                 attachment.attach_field(field4)
-    #             except:
-    #                 pass
-    #             message.attach(attachment)
-    #         return message.to_json()
-    #     else:
-    #         m = MessageClass()
-    #         d = json.loads(r.text)
-    #         m.message_text = d["Fault"]["Error"][0]["Detail"]
-    #         return m.to_json() #"{0}: {1}".format(r.status_code, r.text)
-    #
-    # def get_customer_details(self,args):
-    #
-    #     print("In get_customer_details")
-    #
-    #     # Fetching arguments passed from Slack
-    #     customerId = args['customer_id']
-    #
-    #     # API call parameters for getting customer details
-    #     route = "/v3/company/" + self.realmID + "/customer/" + customerId
-    #     bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #     auth_header = 'Bearer ' + bearer.accessToken
-    #     headers = {'Authorization': auth_header, 'content-type': 'application/json'}
-    #
-    #     # Consuming the API
-    #     r = requests.get(settings.PRODUCTION_BASE_URL + route, headers=headers)
-    #
-    #     # Response check
-    #     if r.status_code == requests.codes.ok:
-    #
-    #         # Getting response in JSON
-    #         response = json.loads(json.dumps(xmltodict.parse(r.text)))
-    #         print(response)
-    #
-    #         #'IntuitResponse'
-    #         #'DisplayName'
-    #         #'Balance'
-    #         #'PrimaryEmailAddr' 'Address'
-    #
-    #         # Creating message object using YA SDK
-    #         message = MessageClass()
-    #         message.message_text = "Customer details :"
-    #
-    #         attachment = MessageAttachmentsClass()
-    #         try:
-    #             field1 = AttachmentFieldsClass()
-    #             field1.title = "Name :"
-    #             field1.value = response['IntuitResponse']['Customer']['DisplayName']
-    #             attachment.attach_field(field1)
-    #         except:
-    #             pass
-    #
-    #         try:
-    #             field2 = AttachmentFieldsClass()
-    #             field2.title = "Email Id :"
-    #             field2.value = response['IntuitResponse']['Customer']['PrimaryEmailAddr']['Address']
-    #             attachment.attach_field(field2)
-    #         except:
-    #             pass
-    #
-    #         try:
-    #             field3 = AttachmentFieldsClass()
-    #             field3.title = "Balance:"
-    #             field3.value = response['IntuitResponse']['Customer']['Balance']
-    #             attachment.attach_field(field3)
-    #         except:
-    #             pass
-    #
-    #         try:
-    #             field4 = AttachmentFieldsClass()
-    #             field4.title = "Customer Id:"
-    #             field4.value = response['IntuitResponse']['Customer']['Id']
-    #             attachment.attach_field(field4)
-    #         except:
-    #             pass
-    #
-    #         message.attach(attachment)
-    #         return message.to_json()
-    #     else:
-    #         m = MessageClass()
-    #         #d = json.loads(r.text)
-    #         m.message_text = "You entered an invalid customer id.\nPlease try again with valid arguments."  #d["Fault"]["Error"][0]["Detail"]
-    #         return m.to_json() #"{0}: {1}".format(r.status_code, r.text)
-    #
-    # def create_customer(self,args):
-    #
-    #
-    #     print("In create_customer")
-    #
-    #     # API call parameters for creating a customer
-    #     route = "/v3/company/" + self.realmID + "/customer"
-    #     bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #     auth_header = 'Bearer ' + bearer.accessToken
-    #     headers = {'Authorization': auth_header, 'accept': 'application/json'}
-    #
-    #     # Fetching the arguments passed from slack
-    #     notes = args['notes']
-    #     display_name = args['display_name']
-    #     email = args['e-mail']
-    #
-    #     # payload for API call
-    #     payload = {
-    #         "BillAddr": {
-    #             "Line1": "",
-    #             "City": "",
-    #             "Country": "",
-    #             "CountrySubDivisionCode": "",
-    #             "PostalCode": ""
-    #         },
-    #         "Notes": notes,
-    #         "Title": "",
-    #         "GivenName": "",
-    #         "MiddleName": "",
-    #         "FamilyName": "",
-    #         "Suffix": "",
-    #         "FullyQualifiedName": "",
-    #         "CompanyName": "",
-    #         "DisplayName": display_name,
-    #         "PrimaryPhone": {
-    #             "FreeFormNumber": ""
-    #         },
-    #         "PrimaryEmailAddr": {
-    #             "Address": email
-    #         }
-    #     }
-    #
-    #     # Consuming the API
-    #     r = requests.post(settings.PRODUCTION_BASE_URL + route, headers=headers, json=payload)
-    #
-    #     # Response check
-    #     if (r.status_code == requests.codes.ok):
-    #
-    #         # Getting the response
-    #         response = json.loads(r.text)
-    #
-    #         print(response)
-    #
-    #         # Creating message using YA SDK
-    #         message = MessageClass()
-    #         message.message_text = "New customer " + display_name +  " created successfully !"
-    #         attachment = MessageAttachmentsClass()
-    #         try:
-    #             field1 = AttachmentFieldsClass()
-    #             field1.title = "Name :"
-    #             field1.value = display_name
-    #             attachment.attach_field(field1)
-    #         except:
-    #             pass
-    #
-    #         try:
-    #             field2 = AttachmentFieldsClass()
-    #             field2.title = "ID :"
-    #             field2.value = response["Customer"]["Id"]
-    #             attachment.attach_field(field2)
-    #         except:
-    #             pass
-    #         try:
-    #             field3 = AttachmentFieldsClass()
-    #             field3.title = "Balance :"
-    #             field3.value = response["Customer"]["Balance"]
-    #             attachment.attach_field(field3)
-    #         except:
-    #             pass
-    #         message.attach(attachment)
-    #         return message.to_json()
-    #     else:
-    #         m = MessageClass()
-    #         print(r.text)
-    #         d = json.loads(r.text)
-    #         m.message_text = d["Fault"]["Error"][0]["Detail"]
-    #         return m.to_json() #"{0}: {1}".format(r.status_code, r.text)
-    #
-    # def list_all_invoices(self,args):
-    #
-    #     print("In list_all_invoice_ids")
-    #
-    #     # API parameters for getting all invoices
-    #     route = "/v3/company/" + self.realmID + "/query?query=select * from Invoice"
-    #     bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #     auth_header = 'Bearer ' + bearer.accessToken
-    #     headers = {'Authorization': auth_header, 'content-type': 'application/json'}
-    #
-    #     # Consuming the API
-    #     r = requests.get(settings.PRODUCTION_BASE_URL + route, headers=headers)
-    #
-    #     # Response check
-    #     if r.status_code == requests.codes.ok:
-    #
-    #         # Getting response in JSON
-    #         response = json.loads(json.dumps(xmltodict.parse(r.text)))
-    #
-    #         # print(response)
-    #         data = response['IntuitResponse']['QueryResponse']['Invoice']
-    #
-    #         print(data)
-    #
-    #         # Creating message object from YA SDK
-    #         message = MessageClass()
-    #         message.message_text = "All Invoice details :"
-    #
-    #         for i in range(0, len(data)):
-    #             attachment = MessageAttachmentsClass()
-    #             try:
-    #                 field1 = AttachmentFieldsClass()
-    #                 field1.title = "Invoice Id :"
-    #                 field1.value = data[i]['Id']
-    #                 attachment.attach_field(field1)
-    #             except:
-    #                 pass
-    #
-    #             try:
-    #                 field2 = AttachmentFieldsClass()
-    #                 field2.title = "Total Amount :"
-    #                 field2.value = data[i]['TotalAmt']
-    #                 attachment.attach_field(field2)
-    #                 message.attach(attachment)
-    #             except:
-    #                 pass
-    #
-    #             try:
-    #                 field3 = AttachmentFieldsClass()
-    #                 field3.title = "For :"
-    #                 field3.value = data[i]['CustomerRef']['@name']
-    #                 attachment.attach_field(field3)
-    #                 message.attach(attachment)
-    #             except:
-    #                 pass
-    #
-    #             try:
-    #                 field4 = AttachmentFieldsClass()
-    #                 field4.title = "Due date :"
-    #                 field4.value = data[i]['DueDate']
-    #                 attachment.attach_field(field4)
-    #                 message.attach(attachment)
-    #             except:
-    #                 pass
-    #
-    #         return message.to_json()
-    #     else:
-    #         m = MessageClass()
-    #         d = json.loads(r.text)
-    #         m.message_text = d["Fault"]["Error"][0]["Detail"]
-    #         return m.to_json() #"{0}: {1}".format(r.status_code, r.text)
-    #
-    # def list_all_customer_ids(self, args):
-    #     '''
-    #     Picklist function to get list of customer ids
-    #     '''
-    #
-    #     print("In list_all_customer_ids")
-    #
-    #     # API call parameters for getting all customer ids
-    #     route = "/v3/company/" + self.realmID + "/query?query=select * from Customer"
-    #     bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #     auth_header = 'Bearer ' + bearer.accessToken
-    #     headers = {'Authorization': auth_header, 'content-type': 'application/json'}
-    #
-    #     # Consuming the API
-    #     r = requests.get(settings.PRODUCTION_BASE_URL + route, headers=headers)
-    #
-    #     # Response check
-    #     if r.status_code == requests.codes.ok:
-    #
-    #         # Fetching response in JSON
-    #         response = json.loads(json.dumps(xmltodict.parse(r.text)))
-    #         # print(response)
-    #
-    #         customer_data = response['IntuitResponse']['QueryResponse']['Customer']
-    #
-    #         # Creating a message object using YA SDK functions
-    #         m = MessageClass()
-    #         m.message_text = "This is list all customer picklist function"
-    #
-    #         ### Hardcoded
-    #         ### Change It !
-    #         data = []
-    #         #customer_data[i]
-    #         for i in range(0,len(customer_data)):
-    #             data.append({"id":"12"})
-    #         m.data = data
-    #         return m.to_json()
-    #     else:
-    #         m = MessageClass()
-    #         d = json.loads(r.text)
-    #         m.message_text = d["Fault"]["Error"][0]["Detail"]
-    #         return m.to_json() #"{0}: {1}".format(r.status_code, r.text)
-    #
-    #
-    # def list_all_invoice_ids(self, args):
-    #
-    #     print("In list_all_invoice_ids")
-    #
-    #     # API call parameters to get all invoice ids
-    #     route = "/v3/company/" + self.realmID + "/query?query=select * from Invoice"
-    #     bearer = getBearerTokenFromRefreshToken(self.quickbook_access_token_object.refreshToken, self.user_integration)
-    #     auth_header = 'Bearer ' + bearer.accessToken
-    #     headers = {'Authorization': auth_header, 'content-type': 'application/json'}
-    #
-    #     # Consuming the API
-    #     r = requests.get(settings.PRODUCTION_BASE_URL + route, headers=headers)
-    #
-    #     # Response check
-    #     if r.status_code == requests.codes.ok:
-    #
-    #         # Fetching response in JSON
-    #         response = json.loads(json.dumps(xmltodict.parse(r.text)))
-    #         # print(response)
-    #         data = response['IntuitResponse']['QueryResponse']['Invoice']
-    #         print(data)
-    #         m = MessageClass()
-    #         m.message_text = "This is list all invoices picklist function"
-    #         #data[i]["Id"]
-    #
-    #         ## Hardcoded
-    #         ## Change It
-    #
-    #         data = []
-    #         # for i in range(0,len(data)):
-    #         data.append({"id":"12"})
-    #         m.data = data
-    #         return m.to_json()
-    #     else:
-    #         m = MessageClass()
-    #         d = json.loads(r.text.decode("utf-8"))
-    #         m.message_text = d["Fault"]["Error"][0]["Detail"]
-    #         return m.to_json() #"{0}: {1}".format(r.status_code, r.text)
+    def get_shared_links(self,args):
+
+        print("In get_shared_links")
+
+        flag = False
+        # Arguments passed from slack
+        # For the optional argument
+        try:
+            path = args['path']
+            flag = True
+        except:
+            flag = False
+
+        headers = {
+            'Authorization': 'Bearer ' + self.dropbox_access_token,
+            'Content-Type': 'application/json',
+        }
+
+
+        endpoint = 'https://api.dropboxapi.com/2/sharing/list_shared_links'
+
+        if flag == True:
+            data = {"path": path}
+        else:
+            data = {}
+
+        # Consuming the API
+        r = requests.post(endpoint, headers=headers, json=data)
+
+        # Response check
+        if r.status_code == requests.codes.ok:
+
+            # Getting response in JSON
+            response = r.content.decode("utf-8")
+            response = json.loads(response)
+            print(response)
+            links = response['links']
+
+            message = MessageClass()
+            message.message_text = "List of all shared links :"
+            attachment = MessageAttachmentsClass()
+
+            for i in range(0,len(links)):
+                try:
+                    field1 = AttachmentFieldsClass()
+                    field1.title = "Name :"
+                    field1.value = links[i]['name']
+                    attachment.attach_field(field1)
+                except KeyError : 'name'
+
+                # field2 = AttachmentFieldsClass()
+                # field2.title = "Type :"
+                # field2.value = links[i]['.tag']
+                # attachment.attach_field(field2)
+
+                field3 = AttachmentFieldsClass()
+                field3.title = "Preview URL :"
+                field3.value = links[i]['url']
+                attachment.attach_field(field3)
+
+            message.attach(attachment)
+            return message.to_json()
+        else:
+            m = MessageClass()
+            print(r.content.decode("utf-8"))
+            d = r.content.decode("utf-8")
+            m.message_text = "{0}: {1}".format(r.status_code, r.text)
+            return m.to_json()
+
+    def get_all_folders(self,args):
+
+        print("In get_all_folders")
+
+        # API call parameters for getting all customers
+
+        headers = {
+            'Authorization': 'Bearer ' + self.dropbox_access_token,
+            'Content-Type': 'application/json',
+        }
+
+        data = {"path": "",
+               "recursive": True,
+               "include_media_info": False,
+               "include_deleted": False,
+               "include_has_explicit_shared_members": False,
+               "include_mounted_folders": True}
+
+        # Consuming the API
+        r = requests.post('https://api.dropboxapi.com/2/files/list_folder', headers=headers, json=data)
+
+        # Error check
+        if r.status_code == requests.codes.ok:
+
+            # Getting response in JSON format
+            response = r.content.decode("utf-8")
+            response = json.loads(response)
+            print(response)
+
+            message = MessageClass()
+            message.message_text = "List of all folders :"
+            attachment = MessageAttachmentsClass()
+
+            for i in range(0, len(response['entries'])):
+
+                field1 = AttachmentFieldsClass()
+                field1.title = "Name :"
+                field1.value = response['entries'][i]['name']
+                attachment.attach_field(field1)
+
+                field2 = AttachmentFieldsClass()
+                field2.title = "Type :"
+                field2.value = response['entries'][i]['.tag']
+                attachment.attach_field(field2)
+            #
+            # if response['has_more'] == True:
+            #     button = MessageButtonsClass()
+            #     button.name = "1"
+            #     button.value = "1"
+            #     button.text = "Get more files and folders"
+            #     button.command = {
+            #         "service_application": self.user_integration,
+            #         "function_name": 'get_more_folders',
+            #         "data": {"cursor": response['cursor']}
+            #     }
+            #     attachment.attach_button(button)
+
+            message.attach(attachment)
+            return message.to_json()
+        else:
+            m = MessageClass()
+            print(r.content.decode("utf-8"))
+            d = r.content.decode("utf-8")
+            m.message_text = "{0}: {1}".format(r.status_code, r.text)
+            return m.to_json()
+
+    ## Not an active function, used inside other function
+    def get_more_folders(self,args):
+
+        print("In 	get_more_folders")
+
+        # Fetching arguments passed from Slack
+        cursor = args['cursor']
+
+        # API call parameters for getting customer details
+        headers = {
+            'Authorization': 'Bearer ' + self.dropbox_access_token,
+            'Content-Type': 'application/json',
+        }
+
+        data = {"cursor": cursor}
+        re = requests.post('https://api.dropboxapi.com/2/files/list_folder/continue', headers=headers,
+                           json=data)
+
+        if re.status_code == requests.codes.ok:
+
+            res = re.content.decode("utf-8")
+            res = json.loads(res)
+            print("----")
+            print(res)
+        else:
+            m = MessageClass()
+            print(re.content.decode("utf-8"))
+            d = re.content.decode("utf-8")
+            m.message_text = "{0}: {1}".format(re.status_code, re.text)
+            return m.to_json()
+
+    def download_file(self,args):
+        print("In download_file")
+        # Fetching the arguments passed from slack
+        path = args['path']
+
+        # API call parameters for creating a customer
+
+        headers = {
+            'Authorization': 'Bearer ' + self.dropbox_access_token,
+            'Content-Type': 'application/json',
+        }
+
+        data = {"path": path}
+
+        # Consuming the API
+        r = requests.post('https://api.dropboxapi.com/2/files/get_temporary_link', headers=headers, json=data)
+
+        # Response check
+        if (r.status_code == requests.codes.ok):
+
+            # Getting the response
+            response = r.content.decode("utf-8")
+            response = json.loads(response)
+            print(response)
+
+            # Creating message using YA SDK
+            message = MessageClass()
+            message.message_text = "Temporary link to download :"
+            attachment = MessageAttachmentsClass()
+
+            field1 = AttachmentFieldsClass()
+            field1.title = "This link expires in 4 Hr :"
+            field1.value = response['link']
+            attachment.attach_field(field1)
+
+            message.attach(attachment)
+            return message.to_json()
+        else:
+            m = MessageClass()
+            print(r.content.decode("utf-8"))
+            d = r.content.decode("utf-8")
+            m.message_text = "{0}: {1}".format(r.status_code, r.text)
+            return m.to_json()
+
+    ## Handle more than 100 searches
+    def search(self,args):
+        print("In search")
+        print(args)
+
+        path = args['path']
+        query = args['search']
+
+        headers = {
+            'Authorization': 'Bearer ' + self.dropbox_access_token,
+            'Content-Type': 'application/json',
+        }
+
+        if path == '/':
+            path = ""
+
+        data = {"path": path,"query": query,"start": 0,"max_results": 100,"mode": "filename"}
+
+
+        # Consuming the API
+        r = requests.post('https://api.dropboxapi.com/2/files/search', headers=headers, json=data)
+
+        # Response check
+        if r.status_code == requests.codes.ok:
+            print("---------------")
+            # Getting response in JSON
+            r = r.content.decode("utf-8")
+            response = json.loads(r)
+            print(response)
+
+            # Creating message using YA SDK
+            message = MessageClass()
+
+            if len(response['matches']) == 0:
+                message.message_text = "No matches !\nPlease search again."
+                return message.to_json()
+
+            message.message_text = "Matches :"
+            attachment = MessageAttachmentsClass()
+
+            for i in range(0, len(response['matches'])):
+
+                field1 = AttachmentFieldsClass()
+                field1.title = "Path:"
+                field1.value = response['matches'][i]['metadata']['path_display']
+                attachment.attach_field(field1)
+
+                field2 = AttachmentFieldsClass()
+                field2.title = "Name :"
+                field2.value = response['matches'][i]['metadata']['name']
+                attachment.attach_field(field2)
+
+                field3 = AttachmentFieldsClass()
+                field3.title = "Type :"
+                field3.value = response['matches'][i]['metadata']['.tag']
+                attachment.attach_field(field3)
+
+            message.attach(attachment)
+            return message.to_json()
+        else:
+            print("Error")
+            m = MessageClass()
+            print(r.content.decode("utf-8"))
+            d = r.content.decode("utf-8")
+            m.message_text = "{0}: {1}".format(r.status_code, r.text)
+            return m.to_json()
+
+    def share_folder(self, args):
+
+
+        print("In share_folder")
+
+        # Arguments from slack
+        path = args["path"]
+        member_policy = args['member_policy']
+        shared_link_policy = args['shared_link_policy']
+
+        if member_policy != 'anyone' and member_policy != "team":
+            m = MessageClass()
+            m.message_text = "Invalid value in member_policy argument"
+            return m.to_json()
+
+        if shared_link_policy != 'anyone' and shared_link_policy != "team":
+            m = MessageClass()
+            m.message_text = "Invalid value in shared_link_policy argument"
+            return m.to_json()
+
+        # API call parameters for getting all customer ids
+        headers = {
+            'Authorization': 'Bearer ' + self.dropbox_access_token,
+            'Content-Type': 'application/json',
+        }
+
+        data = {"path": path,"acl_update_policy": "editors","force_async": False,"member_policy": member_policy ,"shared_link_policy": shared_link_policy}
+
+
+        # Consuming the API
+        r = requests.post('https://api.dropboxapi.com/2/sharing/share_folder', headers=headers, json=data)
+
+        # Response check
+        if r.status_code == requests.codes.ok:
+
+            # Fetching response in JSON
+            r = r.content.decode("utf-8")
+            response = json.loads(r)
+            print(response)
+
+            # Creating a message object using YA SDK functions
+            m = MessageClass()
+            m.message_text = "Details for the shared folder : "
+            attachment = MessageAttachmentsClass()
+
+            field1 = AttachmentFieldsClass()
+            field1.title = "Shared link : "
+            field1.value = response['preview_url']
+            attachment.attach_field(field1)
+
+            field2 = AttachmentFieldsClass()
+            field2.title = "Visibility :"
+            field2.value = response['policy']['shared_link_policy']['.tag']
+            attachment.attach_field(field2)
+
+            field3 = AttachmentFieldsClass()
+            field3.title = "Name :"
+            field3.value = response['name']
+            attachment.attach_field(field3)
+            m.attach(attachment)
+            return m.to_json()
+
+        else:
+            print("Error")
+            m = MessageClass()
+            print(r.content.decode("utf-8"))
+            d = r.content.decode("utf-8")
+            m.message_text = "{0}: {1}".format(r.status_code, r.text)
+            return m.to_json()
+
+    ## Check the button part
+    def create_folder(self, args):
+
+        print("In create_folder")
+        print(args)
+
+        path = args['path']
+        autorename = args['autorename']
+
+        if autorename != 'true' and autorename != 'false':
+            m = MessageClass()
+            m.message_text = "Invalid value in autorename argument"
+            return m.to_json()
+
+        headers = {
+            'Authorization': 'Bearer ' + self.dropbox_access_token,
+            'Content-Type': 'application/json',
+        }
+
+        if autorename == 'true':
+            autorename = True
+        else:
+            autorename = False
+
+        data = {"path": path,"autorename": autorename}
+
+
+
+        # Consuming the API
+        r = requests.post('https://api.dropboxapi.com/2/files/create_folder_v2', headers=headers, json=data)
+
+        # Response check
+        if r.status_code == requests.codes.ok:
+            print("---------------")
+            # Getting response in JSON
+            r = r.content.decode("utf-8")
+            response = json.loads(r)
+            print(response)
+
+            #Creating message using YA SDK
+            message = MessageClass()
+            attachment = MessageAttachmentsClass()
+
+            message.message_text = "New folder successfully created"
+            # button = MessageButtonsClass()
+            # button.name = "1"
+            # button.value = "1"
+            # button.text = "Get folder details"
+            # button.command = {
+            #     "service_application": self.user_integration,
+            #     "function_name": 'get_all_folders',
+            #     "data" :{"path": response['metadata']['path_display'],
+            #    "recursive": True,
+            #    "include_media_info": False,
+            #    "include_deleted": False,
+            #    "include_has_explicit_shared_members": False,
+            #    "include_mounted_folders": True}
+            # }
+            # attachment.attach_button(button)
+
+            message.attach(attachment)
+            return message.to_json()
+        else:
+            print("Error")
+            m = MessageClass()
+            print(r.content.decode("utf-8"))
+            d = r.content.decode("utf-8")
+            m.message_text = "{0}: {1}".format(r.status_code, r.text)
+            return m.to_json()
