@@ -15,6 +15,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_HREF = "/"
 BASE_URL = "https://8a4f4e24.ngrok.io"
 
 ### YellowAnt OAuth specific settings ###
@@ -48,14 +49,14 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'web',
+    'lib.web',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'records'
+    'lib.records'
 ]
 
 MIDDLEWARE = [

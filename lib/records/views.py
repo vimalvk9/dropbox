@@ -23,9 +23,9 @@ from requests import Response
 from yellowant import YellowAnt
 from yellowant.messageformat import MessageClass, MessageAttachmentsClass, MessageButtonsClass, AttachmentFieldsClass
 
-from records.commandcentre import CommandCentre
+from ..records.commandcentre import CommandCentre
 from requests.models import Response
-from records.models import YellowUserToken,YellowAntRedirectState, AppRedirectState, DropBoxUserToken
+from ..records.models import YellowUserToken,YellowAntRedirectState, AppRedirectState, DropBoxUserToken
 
 # Create your views here.
 

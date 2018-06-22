@@ -7,17 +7,11 @@
 #from django.http import HttpResponse
 #from yellowant import YellowAnt
 import json
-import urllib
 from decimal import Decimal, ROUND_DOWN
-
-import datetime
 from yellowant.messageformat import MessageClass, MessageAttachmentsClass, AttachmentFieldsClass, MessageButtonsClass
 
 from .models import YellowUserToken,DropBoxUserToken
-#import traceback
 import requests
-#import datetime
-#import pytz
 from django.conf import settings
 
 class CommandCentre(object):

@@ -5,17 +5,16 @@ Home page for the application
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Home{% endblock %}
-<base href="/user">
-<!--{% block base %}<base href="{{base_href}}">{% endblock %}-->
+<!--<base href="/user">-->
+{% block base %}<base href="{{base_href}}">{% endblock %}
 {% block content %}
 
 <script>
   var djangoConstants ={
-    base_href :"/",
-    application_id:1911
+    base_href: "{{base_href}}",
+    application_id:{{application_id}}
   };
 </script>
-
 
 
 

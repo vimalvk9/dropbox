@@ -18,8 +18,8 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 
-from lib.web import urls as web_urls
-from lib.records.views import redirectToYellowAntAuthenticationPage, yellowantRedirecturl, dropboxRedirecturl, yellowantapi, \
+from ..lib.web import urls as web_urls
+from ..lib.records.views import redirectToYellowAntAuthenticationPage, yellowantRedirecturl, dropboxRedirecturl, yellowantapi, \
     webhook
 
 urlpatterns = [
@@ -46,7 +46,6 @@ urlpatterns = [
 
     url('webhook/(?P<hash_str>[^/]+)/', webhook, name='webhook'),
 
-    ## url("",include(quickauth_urls)),
     url("", include(web_urls)),
 
 ]
