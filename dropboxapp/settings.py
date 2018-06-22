@@ -64,7 +64,7 @@ YELLOWANT_REDIRECT_URL = BASE_URL + "yellowantredirecturl/"
 
 # DROPBOX_CLIENT_ID = "pf80f4dqnufmysv"
 # DROPBOX_CLIENT_SECRET = "jxd29kygpjfd2uk"
-DROPBOX_REDIRECT_URL = BASE_URL + "/dropbox-redirect-url/"
+DROPBOX_REDIRECT_URL = BASE_URL + "dropbox-redirect-url/"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
