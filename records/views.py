@@ -19,11 +19,12 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServer
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from requests import Response
 from yellowant import YellowAnt
-from yellowant.messageformat import MessageClass, MessageAttachmentsClass, MessageButtonsClass
-
+from yellowant.messageformat import MessageClass, MessageAttachmentsClass, MessageButtonsClass, AttachmentFieldsClass
 
 from records.commandcentre import CommandCentre
+from requests.models import Response
 from records.models import YellowUserToken,YellowAntRedirectState, AppRedirectState, DropBoxUserToken
 
 # Create your views here.
@@ -166,38 +167,100 @@ def dropboxRedirecturl(request):
 
         DropBoxUserToken.objects.create(user_integration=ut,accessToken=accessToken,account_id=account_id)
         print(access_token_dict)
+
+        url = settings.BASE_URL + "/webhook/" + ut.webhook_id + "/"
+        print(url)
+
         return HttpResponseRedirect("/")
 
-# @csrf_exempt
-# def webhook(request, hash_str=""):
-#     print("Inside webhook")
-#     code = request.GET.get("code", False)
-#
-#     if code == request.codes.ok:
-#         data =  (request.body.decode('utf-8'))
-#         response_json = json.loads(data)
-#         print(response_json)
-#
-#         try:
-#             operation = response_json['eventNotifications'][0]['dataChangeEvent']['entities'][0]['operation']
-#             name = response_json['eventNotifications'][0]['dataChangeEvent']['entities'][0]['name']
-#         except:
-#             pass
-#
-#         print(operation)
-#
-#         if operation == 'Create':
-#             if name == 'Customer':
-#                 add_new_customer(request,hash_str)
-#             else:
-#                 add_new_invoice(request,hash_str)
-#         else:
-#             update_invoice(request,hash_str)
-#
-#         return HttpResponse('OK',status=200)
-#     else:
-#         return HttpResponse(status=400)
-#
+@csrf_exempt
+def webhook(request, hash_str=""):
+
+    '''Respond to the webhook verification (GET request) by echoing back the challenge parameter.'''
+    print("Inside webhook")
+
+    if request.method == "GET":
+        print("Inside webhook validation")
+        challenge = request.GET.get('challenge',None)
+
+        if challenge != None:
+            return HttpResponse(challenge,status=200)
+        else:
+            return HttpResponse(status=400)
+
+    else:
+        print("In notifications")
+        webhook_id = hash_str
+        data =  (request.body.decode('utf-8'))
+        response_json = json.loads(data)
+        print(response_json)
+
+        try:
+            yellow_obj = YellowUserToken.objects.get(webhook_id=webhook_id)
+            print(yellow_obj)
+            access_token = yellow_obj.yellowant_token
+            print(access_token)
+            integration_id = yellow_obj.yellowant_integration_id
+            service_application = str(integration_id)
+            print(service_application)
+
+            # Creating message object for webhook message
+
+            webhook_message = MessageClass()
+            webhook_message.message_text = "File/Folder updated !"
+            attachment = MessageAttachmentsClass()
+            attachment.title = "Updated file/folder details :"
+
+            for i in range(0,len(response_json['list_folder']['accounts'])):
+                field1 = AttachmentFieldsClass()
+                field1.title = "Id : "
+                field1.value = response_json['list_folder']['accounts'][i]
+                attachment.attach_field(field1)
+
+            attachment2 = MessageAttachmentsClass()
+            attachment2.title = "User update details :"
+
+            for i in range(0, len(response_json['delta']['users'])):
+                field2 = AttachmentFieldsClass()
+                field2.title = "Id : "
+                field2.value = response_json['delta']['users'][i]
+                attachment2.attach_field(field2)
+
+            button = MessageButtonsClass()
+            button.name = "1"
+            button.value = "1"
+            button.text = "Get all files and folders "
+            button.command = {
+                "service_application": service_application,
+                "function_name": 'get_all_folders',
+                "data" : {"path": "",
+                "recursive": True,
+                "include_media_info": False,
+                "include_deleted": False,
+                "include_has_explicit_shared_members": False,
+                "include_mounted_folders": True}
+                }
+
+            attachment.attach_button(button)
+            webhook_message.attach(attachment)
+            webhook_message.attach(attachment2)
+            #print(integration_id)
+
+            webhook_message.data = {}
+            # Creating yellowant object
+            yellowant_user_integration_object = YellowAnt(access_token=access_token)
+
+            # Sending webhook message to user
+            send_message = yellowant_user_integration_object.create_webhook_message(
+                requester_application=integration_id,
+                webhook_name="files_folders_update", **webhook_message.get_dict())
+
+            return HttpResponse("OK", status=200)
+
+        except YellowUserToken.DoesNotExist:
+            return HttpResponse("Not Authorized", status=403)
+
+
 # def update_invoice(request,webhook_id):
 #
 #     """

@@ -19,7 +19,8 @@ from django.urls import include
 from django.urls import path
 
 from web import urls as web_urls
-from records.views import redirectToYellowAntAuthenticationPage, yellowantRedirecturl, dropboxRedirecturl, yellowantapi
+from records.views import redirectToYellowAntAuthenticationPage, yellowantRedirecturl, dropboxRedirecturl, yellowantapi, \
+    webhook
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -43,7 +44,8 @@ urlpatterns = [
     # For getting command specific information from slack on executing a command
     url("yellowant-api/", yellowantapi, name="yellowant-api"),
 
-    #url('webhook/(?P<hash_str>[^/]+)/', webhook, name='webhook'),
+    url('webhook/(?P<hash_str>[^/]+)/', webhook, name='webhook'),
+
     ## url("",include(quickauth_urls)),
     url("", include(web_urls)),
 

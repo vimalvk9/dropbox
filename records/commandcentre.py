@@ -333,13 +333,17 @@ class CommandCentre(object):
         print("In get_all_folders")
 
         # API call parameters for getting all customers
+        path = args['path']
 
         headers = {
             'Authorization': 'Bearer ' + self.dropbox_access_token,
             'Content-Type': 'application/json',
         }
 
-        data = {"path": "",
+        if path == '/':
+            path = ""
+
+        data = {"path": path,
                "recursive": True,
                "include_media_info": False,
                "include_deleted": False,
@@ -358,7 +362,7 @@ class CommandCentre(object):
             print(response)
 
             message = MessageClass()
-            message.message_text = "List of all folders :"
+            message.message_text = "List files and folders :"
             attachment = MessageAttachmentsClass()
 
             for i in range(0, len(response['entries'])):
@@ -372,18 +376,23 @@ class CommandCentre(object):
                 field2.title = "Type :"
                 field2.value = response['entries'][i]['.tag']
                 attachment.attach_field(field2)
-            #
-            # if response['has_more'] == True:
-            #     button = MessageButtonsClass()
-            #     button.name = "1"
-            #     button.value = "1"
-            #     button.text = "Get more files and folders"
-            #     button.command = {
-            #         "service_application": self.user_integration,
-            #         "function_name": 'get_more_folders',
-            #         "data": {"cursor": response['cursor']}
-            #     }
-            #     attachment.attach_button(button)
+
+            attachment2 = MessageAttachmentsClass()
+
+            if response['has_more'] == True:
+                button = MessageButtonsClass()
+                button.name = "1"
+                button.value = "1"
+                button.text = "Get more files and folders"
+                button.command = {
+                    "service_application": str(self.user_integration.yellowant_integration_id),
+                    "function_name": 'get_more_folders',
+                    "data": {"cursor": response['cursor']}
+                }
+                attachment2.attach_button(button)
+                message.attach(attachment)
+                message.attach(attachment2)
+                return message.to_json()
 
             message.attach(attachment)
             return message.to_json()
@@ -418,6 +427,43 @@ class CommandCentre(object):
             res = json.loads(res)
             print("----")
             print(res)
+
+            message = MessageClass()
+
+            message.message_text = "More files and folders :"
+            attachment = MessageAttachmentsClass()
+
+            for i in range(0, len(res['entries'])):
+
+                field1 = AttachmentFieldsClass()
+                field1.title = "Name :"
+                field1.value = res['entries'][i]['name']
+                attachment.attach_field(field1)
+
+                field2 = AttachmentFieldsClass()
+                field2.title = "Type :"
+                field2.value = res['entries'][i]['.tag']
+                attachment.attach_field(field2)
+
+            attachment2 = MessageAttachmentsClass()
+
+            if res['has_more'] == True:
+                button = MessageButtonsClass()
+                button.name = "1"
+                button.value = "1"
+                button.text = "Get more files and folders"
+                button.command = {
+                    "service_application": str(self.user_integration.yellowant_integration_id),
+                    "function_name": 'get_more_folders',
+                    "data": {"cursor": res['cursor']}
+                }
+                attachment2.attach_button(button)
+                message.attach(attachment)
+                message.attach(attachment2)
+                return message.to_json()
+
+            message.attach(attachment)
+            return message.to_json()
         else:
             m = MessageClass()
             print(re.content.decode("utf-8"))
@@ -632,8 +678,6 @@ class CommandCentre(object):
 
         data = {"path": path,"autorename": autorename}
 
-
-
         # Consuming the API
         r = requests.post('https://api.dropboxapi.com/2/files/create_folder_v2', headers=headers, json=data)
 
@@ -649,24 +693,25 @@ class CommandCentre(object):
             message = MessageClass()
             attachment = MessageAttachmentsClass()
 
+            attachment2 = MessageAttachmentsClass()
             message.message_text = "New folder successfully created"
-            # button = MessageButtonsClass()
-            # button.name = "1"
-            # button.value = "1"
-            # button.text = "Get folder details"
-            # button.command = {
-            #     "service_application": self.user_integration,
-            #     "function_name": 'get_all_folders',
-            #     "data" :{"path": response['metadata']['path_display'],
-            #    "recursive": True,
-            #    "include_media_info": False,
-            #    "include_deleted": False,
-            #    "include_has_explicit_shared_members": False,
-            #    "include_mounted_folders": True}
-            # }
-            # attachment.attach_button(button)
-
+            button = MessageButtonsClass()
+            button.name = "1"
+            button.value = "1"
+            button.text = "Get folder details"
+            button.command = {
+                "service_application": str(self.user_integration.yellowant_integration_id),
+                "function_name": 'get_all_folders',
+                "data" :{"path": response['metadata']['path_display'],
+               "recursive": True,
+               "include_media_info": False,
+               "include_deleted": False,
+               "include_has_explicit_shared_members": False,
+               "include_mounted_folders": True}
+            }
+            attachment2.attach_button(button)
             message.attach(attachment)
+            message.attach(attachment2)
             return message.to_json()
         else:
             print("Error")
