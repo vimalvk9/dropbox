@@ -11,27 +11,59 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
-
+import json
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+data = open('yellowant_app_credentials.json').read()
+data_json = json.loads(data)
+
 BASE_HREF = "/"
-BASE_URL = "https://8a4f4e24.ngrok.io"
+
+app_name = os.environ.get("HEROKU_APP_NAME")
+BASE_URL = "https://{}.herokuapp.com".format(app_name)
+SITE_PROTOCOL = "https://"
+
+
+DEV_ENV = os.environ.get('ENV', 'DEV')
+print(DEV_ENV)
+if DEV_ENV=="DEV":
+    DROPBOX_CLIENT_SECRET = "jxd29kygpjfd2uk"
+    DROPBOX_CLIENT_ID = "pf80f4dqnufmysv"
+    BASE_URL = "https://8a4f4e24.ngrok.io"
+    SITE_DOMAIN_URL = "ngrok.io"
+elif DEV_ENV=="HEROKU":
+    DROPBOX_CLIENT_SECRET = os.environ.get("DROPBOX_CLIENT_SECRET", "")
+    DROPBOX_CLIENT_ID = os.environ.get("DROPBOX_CLIENT_ID", "")
+    BASE_URL = "https://{}.herokuapp.com/".format(app_name)
+    app_name = os.environ.get("HEROKU_APP_NAME")
+    SITE_DOMAIN_URL = "herokuapp.com"
+
+
+
 
 ### YellowAnt OAuth specific settings ###
 
 YELLOWANT_OAUTH_URL = "https://www.yellowant.com/api/oauth2/authorize/"
-YA_APP_ID = "1911"
+YA_APP_ID = str(data_json['application_id'])
 
-YELLOWANT_CLIENT_ID = "i1Vl0zyRTfWHhXdXWGGQMQ0JjyxiBYZbRGQxlgmD"
-YELLOWANT_CLIENT_SECRET = "FwFhJ3N3X7H9ss1gfpD6b8a1Wu4Xj06HwGjErDSIyied2CU6vKxXTWwTdU1NJc6tlEru0ozt5tW2CV5eSA6seu7A4DQzTxvMehv5E54Fs8nBqbAkRuOwU4X7bJfdFO5x"
-YELLOWANT_VERIFICATION_TOKEN = "AmD4fo8oNysRmcyoCPPmmEMJgHhJb1AkQjBd2h6X5y6YDHvJiyf3ie81doyjASxY9ZYMg5SSWI8fPBDjWMofZ7ayyC9V9a2jLPtMVwnP9WqVVTyZxqWFHerohzepUEm1"
+YELLOWANT_CLIENT_ID = str(data_json['client_id'])
+YELLOWANT_CLIENT_SECRET = str(data_json['client_secret'])
+YELLOWANT_VERIFICATION_TOKEN = str(data_json['verification_token'])
 YELLOWANT_REDIRECT_URL = BASE_URL + "/yellowantredirecturl/"
+
+# YELLOWANT_OAUTH_URL = "https://www.yellowant.com/api/oauth2/authorize/"
+# YA_APP_ID = "1911"
+#
+# YELLOWANT_CLIENT_ID = "i1Vl0zyRTfWHhXdXWGGQMQ0JjyxiBYZbRGQxlgmD"
+# YELLOWANT_CLIENT_SECRET = "FwFhJ3N3X7H9ss1gfpD6b8a1Wu4Xj06HwGjErDSIyied2CU6vKxXTWwTdU1NJc6tlEru0ozt5tW2CV5eSA6seu7A4DQzTxvMehv5E54Fs8nBqbAkRuOwU4X7bJfdFO5x"
+# YELLOWANT_VERIFICATION_TOKEN = "AmD4fo8oNysRmcyoCPPmmEMJgHhJb1AkQjBd2h6X5y6YDHvJiyf3ie81doyjASxY9ZYMg5SSWI8fPBDjWMofZ7ayyC9V9a2jLPtMVwnP9WqVVTyZxqWFHerohzepUEm1"
+# YELLOWANT_REDIRECT_URL = BASE_URL + "/yellowantredirecturl/"
 
 # Dropbox Settings
 
-DROPBOX_CLIENT_ID = "pf80f4dqnufmysv"
-DROPBOX_CLIENT_SECRET = "jxd29kygpjfd2uk"
+# DROPBOX_CLIENT_ID = "pf80f4dqnufmysv"
+# DROPBOX_CLIENT_SECRET = "jxd29kygpjfd2uk"
 DROPBOX_REDIRECT_URL = BASE_URL + "/dropbox-redirect-url/"
 
 # Quick-start development settings - unsuitable for production
@@ -43,7 +75,7 @@ SECRET_KEY = '@+=k_h_-(yp0k&i17g0jsbbeof91)@n_3x+cf)dalp^&&2k-^r'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*','{}.herokuapp.com'.format(app_name)]
 
 
 # Application definition
@@ -61,6 +93,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,6 +138,13 @@ DATABASES = {
 }
 
 
+if DEV_ENV=="HEROKU":
+    import dj_database_url
+    db_from_env = dj_database_url.config()
+    DATABASES['default'].update(db_from_env)
+    DATABASES['default']['CONN_MAX_AGE'] = 500
+
+
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
@@ -142,3 +182,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')

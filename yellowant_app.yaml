@@ -1,0 +1,237 @@
+api_url: https://8a4f4e24.ngrok.io/yellowant-api/
+creator_email: admin@yellowant.com
+documentation_url: www.yellowant.com
+functions:
+  create_folder:
+    function_type: 1
+    input_args:
+      autorename:
+        arg_type: 14
+        description: Want dropbox to auto rename the folder. Input either true or
+          false
+        example: 'false'
+        name: autorename
+        required: 1
+      path:
+        arg_type: 14
+        description: Path for the folder
+        example: /sample
+        name: path
+        required: 1
+    invoke_name: create_folder
+    is_active: 1
+    max_retries: 0
+    name: Create a new folder
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Create a new folder
+    user_rate_limit: 0.0
+  download_file:
+    function_type: 1
+    input_args:
+      path:
+        arg_type: 14
+        description: Path for the file
+        example: id:a4ayc_80_OEAAAAAAAAAYa
+        name: path
+        required: 1
+    invoke_name: download_file
+    is_active: 1
+    max_retries: 0
+    name: Download a file
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Download a file from a user's Dropbox.
+    user_rate_limit: 0.0
+  files_folders_update:
+    function_type: 2
+    input_args: {}
+    invoke_name: files_folders_update
+    is_active: 1
+    max_retries: 0
+    name: Get files and folder notifications
+    output_keys:
+      _keys:
+        accounts: '[__str]:  List of Accounts'
+        users: '[__str]:  List of Users'
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Get webhook for any update in any file or folder
+    user_rate_limit: 0.0
+  get_account_info:
+    function_type: 1
+    input_args: {}
+    invoke_name: get_account_info
+    is_active: 1
+    max_retries: 0
+    name: Get information about your account
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Get information about a user's account.
+    user_rate_limit: 0.0
+  get_all_file_requests:
+    function_type: 1
+    input_args: {}
+    invoke_name: get_all_file_requests
+    is_active: 1
+    max_retries: 0
+    name: Get all file requests you have access to
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Get the list of all file requests
+    user_rate_limit: 0.0
+  get_all_folders:
+    function_type: 1
+    input_args:
+      path:
+        arg_type: 14
+        description: Path for the folder/file. Input '/' for root
+        example: /
+        name: path
+        required: 1
+    invoke_name: get_all_folders
+    is_active: 1
+    max_retries: 0
+    name: Get list of all folders
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Get list of all folders for the user
+    user_rate_limit: 0.0
+  get_all_shared_folders:
+    function_type: 1
+    input_args: {}
+    invoke_name: get_all_shared_folders
+    is_active: 1
+    max_retries: 0
+    name: Get list of all shared folders you have access to
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Return the list of all shared folders the current user has
+      access to.
+    user_rate_limit: 0.0
+  get_more_folders:
+    function_type: 1
+    input_args:
+      cursor:
+        arg_type: 14
+        description: Cursor for the user
+        example: dfghjklkjhgfds
+        name: cursor
+        required: 1
+    invoke_name: get_more_folders
+    is_active: 0
+    max_retries: 0
+    name: Get more folders
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Get more folders for the user
+    user_rate_limit: 0.0
+  get_shared_links:
+    function_type: 1
+    input_args:
+      path:
+        arg_type: 14
+        description: Path for the folder
+        example: /Homework/Math
+        name: path
+        required: 0
+    invoke_name: get_shared_links
+    is_active: 1
+    max_retries: 0
+    name: Get list of your shared links
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: List shared links of this user
+    user_rate_limit: 0.0
+  get_space_usage:
+    function_type: 1
+    input_args: {}
+    invoke_name: get_space_usage
+    is_active: 1
+    max_retries: 0
+    name: Get dropbox space details
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Get the space specific details
+    user_rate_limit: 0.0
+  search:
+    function_type: 1
+    input_args:
+      path:
+        arg_type: 14
+        description: Path in which to search for. Input '/' for root
+        example: /
+        name: path
+        required: 1
+      search:
+        arg_type: 14
+        description: Name of file/folder to be searched
+        example: main_file
+        name: search
+        required: 1
+    invoke_name: search
+    is_active: 1
+    max_retries: 0
+    name: Search a particular file or folder
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Search a particular file or folder in a particular path or
+      root
+    user_rate_limit: 0.0
+  share_folder:
+    function_type: 1
+    input_args:
+      member_policy:
+        arg_type: 14
+        description: Who can be a member of this shared folder. Values should be team/anyone
+        example: team
+        name: member_policy
+        required: 1
+      path:
+        arg_type: 14
+        description: Path of the folder to be shared
+        example: /Home
+        name: path
+        required: 0
+      shared_link_policy:
+        arg_type: 14
+        description: Who can view shared links in this folder
+        example: anyone
+        name: shared_link_policy
+        required: 1
+    invoke_name: share_folder
+    is_active: 1
+    max_retries: 0
+    name: Share a folder
+    output_keys: {}
+    privacy_mode: 0
+    rate_limited: 0
+    short_description: Share a folder from dropbox
+    user_rate_limit: 0.0
+icon_url: https://cdn-images-1.medium.com/max/1200/1*xXdQyxKcneiTGhe8tEkMzg.png
+install_page_url: www.yellowant.com
+invoke_name: dropbox
+is_active: 1
+is_production_or_sandbox: 1
+long_description: Dropbox is a file hosting service that offers cloud storage, file
+  synchronization, personal cloud, and client software.
+name: Dropbox
+privacy_policy_url: www.yellowant.com
+rate_limit: 0.0
+rate_limited: 0
+redirect_uris: https://8a4f4e24.ngrok.io/yellowantredirecturl/
+short_description: Dropbox is a file hosting service that offers cloud storage, file
+  synchronization, personal cloud, and client software.
+user_rate_limit: 0.0
+visibility_scope: 1
+website: www.yellowant.com
