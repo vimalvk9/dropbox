@@ -195,6 +195,11 @@ def webhook(request, hash_str=""):
         response_json = json.loads(data)
         print(response_json)
 
+        data = {
+	            "users": [],
+	            "accounts": []
+            }
+
         try:
             yellow_obj = YellowUserToken.objects.get(webhook_id=webhook_id)
             print(yellow_obj)
@@ -215,6 +220,7 @@ def webhook(request, hash_str=""):
                 field1 = AttachmentFieldsClass()
                 field1.title = "Id : "
                 field1.value = response_json['list_folder']['accounts'][i]
+                data["accounts"].append(response_json['list_folder']['accounts'][i])
                 attachment.attach_field(field1)
 
             attachment2 = MessageAttachmentsClass()
@@ -224,6 +230,7 @@ def webhook(request, hash_str=""):
                 field2 = AttachmentFieldsClass()
                 field2.title = "Id : "
                 field2.value = response_json['delta']['users'][i]
+                data["users"].append(response_json['delta']['users'][i])
                 attachment2.attach_field(field2)
 
             button = MessageButtonsClass()
@@ -245,8 +252,10 @@ def webhook(request, hash_str=""):
             webhook_message.attach(attachment)
             webhook_message.attach(attachment2)
             #print(integration_id)
-
-            webhook_message.data = {}
+            print("-----------")
+            print(data)
+            print("------------")
+            webhook_message.data = data
             # Creating yellowant object
             yellowant_user_integration_object = YellowAnt(access_token=access_token)
 
