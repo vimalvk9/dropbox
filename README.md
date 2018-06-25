@@ -7,7 +7,7 @@ Go to YellowAnt developers page and click on Generate Developer Token to get "YE
 
 "HEROKU_APP_NAME" should be same as "App name"
 
-![Screenshot]()
+![Screenshot](dropbox_yellowant.png)
 
 ## DO NOT ALTER - "DISABLE_COLLECTSTATIC" and "ENV"
 
